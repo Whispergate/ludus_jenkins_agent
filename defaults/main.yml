@@ -5,6 +5,12 @@ ludus_jenkins_agent_labels: "linux-generic"
 ludus_jenkins_agent_workdir: /opt/jenkins-agent
 ludus_jenkins_agent_user: jenkins
 ludus_jenkins_agent_install_docker: true
+# Controller admin credentials, used ONLY to fetch this agent's inbound
+# connection secret from {url}/computer/{name}/jenkins-agent.jnlp. Must match the
+# controller's JCasC admin. The controller must also define a matching static
+# node (ludus_jenkins_static_agents) or the secret endpoint returns 404.
+ludus_jenkins_admin_user: admin
+ludus_jenkins_admin_password: admin
 ludus_jenkins_agent_jar_version: "latest"
 ludus_jenkins_agent_executors: 2
 

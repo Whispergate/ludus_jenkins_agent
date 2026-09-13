@@ -10,6 +10,7 @@ WorkingDirectory={{ ludus_jenkins_agent_workdir }}
 ExecStart=/usr/bin/java -jar {{ ludus_jenkins_agent_workdir }}/agent.jar \
   -url {{ ludus_jenkins_url }} \
   -name {{ ludus_jenkins_agent_name }} \
+  -secret {{ ludus_jenkins_agent_secret }} \
   -workDir {{ ludus_jenkins_agent_workdir }} \
   -webSocket
 Restart=on-failure

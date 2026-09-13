@@ -84,6 +84,28 @@
     mode: "0644"
     validate_certs: false
 
+- name: Fetch this agent's inbound connection secret from the controller
+  # Inbound agents require a per-node secret. The stable way to obtain it is the
+  # node's JNLP descriptor (getJnlpMac() via Groovy broke in Jenkins 2.427+).
+  # Requires the controller to have already created a matching static node
+  # (ludus_jenkins_static_agents) — a 404 here means that node is missing.
+  ansible.builtin.uri:
+    url: "{{ ludus_jenkins_url }}/computer/{{ ludus_jenkins_agent_name }}/jenkins-agent.jnlp"
+    method: GET
+    url_username: "{{ ludus_jenkins_admin_user }}"
+    url_password: "{{ ludus_jenkins_admin_password }}"
+    force_basic_auth: true
+    validate_certs: false
+    return_content: true
+  register: ludus_jenkins_agent_jnlp
+  until: ludus_jenkins_agent_jnlp.status == 200
+  retries: 15
+  delay: 8
+
+- name: Extract the connection secret from the JNLP descriptor
+  ansible.builtin.set_fact:
+    ludus_jenkins_agent_secret: "{{ (ludus_jenkins_agent_jnlp.content | regex_findall('<argument>([^<]+)</argument>'))[0] }}"
+
 - name: Template Jenkins agent systemd service
   ansible.builtin.template:
     src: jenkins-agent.service.j2
@@ -91,8 +113,9 @@
     mode: "0644"
   notify: Restart Jenkins agent
 
-- name: Enable Jenkins agent service
+- name: Enable and start Jenkins agent service
   ansible.builtin.systemd:
     name: jenkins-agent
     enabled: true
+    state: started
     daemon_reload: true
