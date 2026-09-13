@@ -1,8 +1,8 @@
 ---
-- name: Install Java 21 JRE
+- name: Install Java JRE
   ansible.builtin.apt:
     name:
-      - openjdk-21-jre-headless
+      - "{{ ludus_jenkins_agent_java_package }}"
     state: present
     update_cache: true
 
@@ -29,9 +29,9 @@
       ansible.builtin.shell: |
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
           https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
-          > /etc/apt/sources-list.d/docker.list
+          > /etc/apt/sources.list.d/docker.list
       args:
-        creates: /etc/apt/sources-list.d/docker.list
+        creates: /etc/apt/sources.list.d/docker.list
 
     - name: Install Docker Engine
       ansible.builtin.apt:
