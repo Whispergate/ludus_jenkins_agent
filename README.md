@@ -45,7 +45,7 @@ Ansible role that installs a Jenkins agent on Debian/Ubuntu Linux hosts for the 
     - whispergate.ludus_jenkins_agent
     - whispergate.ludus_maas_builders
   role_vars:
-    ludus_jenkins_url: 'http://10.{{ range_number }}.99.3:8080'
+    ludus_jenkins_url: 'http://10.{{ range_second_octet }}.99.3:8080'
     ludus_jenkins_agent_name: runner-lin01
     ludus_jenkins_agent_labels: 'linux-c linux-go linux-nim linux-generic'
 ```
