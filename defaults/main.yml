@@ -1,0 +1,9 @@
+---
+ludus_jenkins_url: "http://jenkins:8080"
+ludus_jenkins_agent_name: "{{ inventory_hostname }}"
+ludus_jenkins_agent_labels: "linux-generic"
+ludus_jenkins_agent_workdir: /opt/jenkins-agent
+ludus_jenkins_agent_user: jenkins
+ludus_jenkins_agent_install_docker: true
+ludus_jenkins_agent_jar_version: "latest"
+ludus_jenkins_agent_executors: 2

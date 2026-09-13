@@ -1,0 +1,6 @@
+---
+- name: Restart Jenkins agent
+  ansible.builtin.systemd:
+    name: jenkins-agent
+    state: restarted
+    daemon_reload: true

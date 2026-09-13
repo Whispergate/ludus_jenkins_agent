@@ -1,0 +1,20 @@
+[Unit]
+Description=Jenkins Agent - {{ ludus_jenkins_agent_name }}
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ ludus_jenkins_agent_user }}
+WorkingDirectory={{ ludus_jenkins_agent_workdir }}
+ExecStart=/usr/bin/java -jar {{ ludus_jenkins_agent_workdir }}/agent.jar \
+  -url {{ ludus_jenkins_url }} \
+  -name {{ ludus_jenkins_agent_name }} \
+  -workDir {{ ludus_jenkins_agent_workdir }} \
+  -webSocket
+Restart=on-failure
+RestartSec=10
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin:/root/.nimble/bin:/root/go/bin"
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,98 @@
+---
+- name: Install Java 21 JRE
+  ansible.builtin.apt:
+    name:
+      - openjdk-21-jre-headless
+    state: present
+    update_cache: true
+
+- name: Install Docker
+  when: ludus_jenkins_agent_install_docker
+  block:
+    - name: Install Docker prerequisites
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    - name: Add Docker GPG key
+      ansible.builtin.shell: |
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+        chmod a+r /etc/apt/keyrings/docker.asc
+      args:
+        creates: /etc/apt/keyrings/docker.asc
+
+    - name: Add Docker repository
+      ansible.builtin.shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+          https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+          > /etc/apt/sources-list.d/docker.list
+      args:
+        creates: /etc/apt/sources-list.d/docker.list
+
+    - name: Install Docker Engine
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Start and enable Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+- name: Create Jenkins agent user
+  ansible.builtin.user:
+    name: "{{ ludus_jenkins_agent_user }}"
+    shell: /bin/bash
+    system: true
+    create_home: true
+    groups: "{{ 'docker' if ludus_jenkins_agent_install_docker else '' }}"
+    append: true
+
+- name: Create agent work directory
+  ansible.builtin.file:
+    path: "{{ ludus_jenkins_agent_workdir }}"
+    state: directory
+    owner: "{{ ludus_jenkins_agent_user }}"
+    group: "{{ ludus_jenkins_agent_user }}"
+    mode: "0755"
+
+- name: Create shared payloads volume
+  ansible.builtin.file:
+    path: /payloads
+    state: directory
+    owner: "{{ ludus_jenkins_agent_user }}"
+    group: "{{ ludus_jenkins_agent_user }}"
+    mode: "0755"
+
+- name: Download Jenkins agent JAR
+  ansible.builtin.get_url:
+    url: "{{ ludus_jenkins_url }}/jnlpJars/agent.jar"
+    dest: "{{ ludus_jenkins_agent_workdir }}/agent.jar"
+    owner: "{{ ludus_jenkins_agent_user }}"
+    group: "{{ ludus_jenkins_agent_user }}"
+    mode: "0644"
+    validate_certs: false
+
+- name: Template Jenkins agent systemd service
+  ansible.builtin.template:
+    src: jenkins-agent.service.j2
+    dest: /etc/systemd/system/jenkins-agent.service
+    mode: "0644"
+  notify: Restart Jenkins agent
+
+- name: Enable Jenkins agent service
+  ansible.builtin.systemd:
+    name: jenkins-agent
+    enabled: true
+    daemon_reload: true
