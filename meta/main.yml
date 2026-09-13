@@ -1,9 +1,15 @@
 ---
+dependencies: []
+
 galaxy_info:
+  role_name: ludus_jenkins_agent
   author: Whispergate
-  description: Installs a Jenkins agent on Linux with Docker support for MAAS build pipelines
+  description: >-
+    Installs a Jenkins agent on Debian/Ubuntu Linux with Docker support,
+    connecting to a Jenkins controller via WebSocket for MAAS build pipelines.
+  company: ""
   license: BSD-2-Clause
-  min_ansible_version: "2.10"
+  min_ansible_version: "2.14"
   platforms:
     - name: Debian
       versions:
@@ -13,8 +19,8 @@ galaxy_info:
         - jammy
         - noble
   galaxy_tags:
+    - ludus
     - jenkins
     - ci
-    - ludus
     - maas
-dependencies: []
+    - docker
