@@ -1,4 +1,19 @@
 ---
+- name: Get Debian codename
+  ansible.builtin.command: lsb_release -cs
+  register: ludus_jenkins_agent_codename
+  changed_when: false
+
+- name: Enable Debian backports for Java 21
+  when:
+    - "'openjdk-21' in ludus_jenkins_agent_java_package"
+    - ludus_jenkins_agent_codename.stdout == 'bookworm'
+  ansible.builtin.apt_repository:
+    repo: "deb http://deb.debian.org/debian {{ ludus_jenkins_agent_codename.stdout }}-backports main"
+    filename: backports
+    state: present
+    update_cache: true
+
 - name: Install Java JRE
   ansible.builtin.apt:
     name:
@@ -75,7 +90,7 @@
     group: "{{ ludus_jenkins_agent_user }}"
     mode: "0755"
 
-- name: Download Jenkins agent JAR
+- name: Download Jenkins agent JAR from controller
   ansible.builtin.get_url:
     url: "{{ ludus_jenkins_url }}/jnlpJars/agent.jar"
     dest: "{{ ludus_jenkins_agent_workdir }}/agent.jar"
@@ -83,6 +98,8 @@
     group: "{{ ludus_jenkins_agent_user }}"
     mode: "0644"
     validate_certs: false
+    force: true
+  notify: Restart Jenkins agent
 
 - name: Fetch this agent's inbound connection secret from the controller
   # Inbound agents require a per-node secret. The stable way to obtain it is the

@@ -14,8 +14,8 @@ ludus_jenkins_admin_password: admin
 ludus_jenkins_agent_jar_version: "latest"
 ludus_jenkins_agent_executors: 2
 
-# JRE package for the agent. Defaults to OpenJDK 17, which is present in the
-# Debian 12 (bookworm) / Ubuntu 22.04 main repos and is supported by current
-# Jenkins. OpenJDK 21 is NOT in bookworm main (only bookworm-backports), so
-# override this only on a distro where your chosen JDK is actually available.
-ludus_jenkins_agent_java_package: openjdk-17-jre-headless
+# JRE package for the agent. Must match the Java version the Jenkins controller
+# was built with. Modern Jenkins (2.463+) requires Java 21. On Debian 12
+# (bookworm) this is only available via backports; the role enables backports
+# automatically when needed.
+ludus_jenkins_agent_java_package: openjdk-21-jre-headless
