@@ -15,7 +15,6 @@ ludus_jenkins_agent_jar_version: "latest"
 ludus_jenkins_agent_executors: 2
 
 # JRE package for the agent. Must match the Java version the Jenkins controller
-# was built with. Modern Jenkins (2.463+) requires Java 21. On Debian 12
-# (bookworm) this is only available via backports; the role enables backports
-# automatically when needed.
-ludus_jenkins_agent_java_package: openjdk-21-jre-headless
+# was built with. Modern Jenkins (2.463+) requires Java 21. Installed from the
+# Adoptium (Eclipse Temurin) repository.
+ludus_jenkins_agent_java_package: temurin-21-jre

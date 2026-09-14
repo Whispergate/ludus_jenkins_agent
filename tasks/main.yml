@@ -1,22 +1,45 @@
 ---
-- name: Read OS release info
-  ansible.builtin.slurp:
-    src: /etc/os-release
-  register: ludus_jenkins_agent_os_release_raw
+- name: Add Adoptium GPG key
+  when: "'temurin' in ludus_jenkins_agent_java_package"
+  block:
+    - name: Install apt prerequisites
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
 
-- name: Parse VERSION_CODENAME from os-release
-  ansible.builtin.set_fact:
-    ludus_jenkins_agent_codename: "{{ (ludus_jenkins_agent_os_release_raw.content | b64decode) | regex_search('VERSION_CODENAME=(\\S+)', '\\1') | first | default('') }}"
+    - name: Create keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
 
-- name: Enable Debian backports for Java 21
-  when:
-    - "'openjdk-21' in ludus_jenkins_agent_java_package"
-    - ludus_jenkins_agent_codename == 'bookworm'
-  ansible.builtin.apt_repository:
-    repo: "deb http://deb.debian.org/debian {{ ludus_jenkins_agent_codename }}-backports main"
-    filename: backports
-    state: present
-    update_cache: true
+    - name: Download Adoptium GPG key
+      ansible.builtin.shell: |
+        curl -fsSL https://packages.adoptium.net/artifactory/api/gpg/key/public \
+          | gpg --dearmor -o /etc/apt/keyrings/adoptium.gpg
+        chmod a+r /etc/apt/keyrings/adoptium.gpg
+      args:
+        creates: /etc/apt/keyrings/adoptium.gpg
+
+    - name: Read OS release info
+      ansible.builtin.slurp:
+        src: /etc/os-release
+      register: ludus_jenkins_agent_os_release_raw
+
+    - name: Parse VERSION_CODENAME from os-release
+      ansible.builtin.set_fact:
+        ludus_jenkins_agent_codename: "{{ (ludus_jenkins_agent_os_release_raw.content | b64decode) | regex_search('VERSION_CODENAME=(\\S+)', '\\1') | first | default('') }}"
+
+    - name: Add Adoptium repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb {{ ludus_jenkins_agent_codename }} main"
+        filename: adoptium
+        state: present
+        update_cache: true
 
 - name: Install Java JRE
   ansible.builtin.apt:
