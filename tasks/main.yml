@@ -1,15 +1,19 @@
 ---
-- name: Get Debian codename
-  ansible.builtin.command: lsb_release -cs
-  register: ludus_jenkins_agent_codename
-  changed_when: false
+- name: Read OS release info
+  ansible.builtin.slurp:
+    src: /etc/os-release
+  register: ludus_jenkins_agent_os_release_raw
+
+- name: Parse VERSION_CODENAME from os-release
+  ansible.builtin.set_fact:
+    ludus_jenkins_agent_codename: "{{ (ludus_jenkins_agent_os_release_raw.content | b64decode) | regex_search('VERSION_CODENAME=(\\S+)', '\\1') | first | default('') }}"
 
 - name: Enable Debian backports for Java 21
   when:
     - "'openjdk-21' in ludus_jenkins_agent_java_package"
-    - ludus_jenkins_agent_codename.stdout == 'bookworm'
+    - ludus_jenkins_agent_codename == 'bookworm'
   ansible.builtin.apt_repository:
-    repo: "deb http://deb.debian.org/debian {{ ludus_jenkins_agent_codename.stdout }}-backports main"
+    repo: "deb http://deb.debian.org/debian {{ ludus_jenkins_agent_codename }}-backports main"
     filename: backports
     state: present
     update_cache: true
