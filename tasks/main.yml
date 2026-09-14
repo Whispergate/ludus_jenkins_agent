@@ -41,10 +41,11 @@
         state: present
         update_cache: true
 
-- name: Install Java JRE
+- name: Install Java JRE and Git
   ansible.builtin.apt:
     name:
       - "{{ ludus_jenkins_agent_java_package }}"
+      - git
     state: present
     update_cache: true
 
